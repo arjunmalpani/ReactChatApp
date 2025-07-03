@@ -11,14 +11,21 @@ function SideBar() {
 
   const { onlineUsers } = useAuthStore();
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
+
+  // Ensure users is always an array and add better error handling
+  const safeUsers = Array.isArray(users) ? users : [];
+  const safeOnlineUsers = Array.isArray(onlineUsers) ? onlineUsers : [];
+
   const filteredUsers = showOnlineOnly
-    ? users.filter((user) => onlineUsers.includes(user._id))
-    : users;
+    ? safeUsers.filter((user) => safeOnlineUsers.includes(user._id))
+    : safeUsers;
+
   useEffect(() => {
     getUsers();
   }, [getUsers]);
 
-  if (isUsersLoading) {
+  // Show loading skeleton if users are loading or users is not an array
+  if (isUsersLoading || !Array.isArray(users)) {
     return <SidebarSkeleton />;
   }
 
@@ -29,7 +36,7 @@ function SideBar() {
           <Users className="size-6" />
           <span className="font-medium hidden lg:block">Contacts</span>
         </div>
-        {/* todo : online filter */}
+        {/* Online filter */}
         <div className="mt-3 hidden lg:flex items-center gap-2">
           <label className="cursor-pointer flex items-center gap-2">
             <input
@@ -41,51 +48,57 @@ function SideBar() {
             <span className="text-sm">Show online only</span>
           </label>
           <span className="text-xs text-base-content/60">
-            ({onlineUsers.length - 1} online)
+            ({Math.max(0, safeOnlineUsers.length - 1)} online)
           </span>
         </div>
       </div>
       <div className="overflow-y-auto w-full py-3">
-        {filteredUsers.map((user) => (
-          <button
-            key={user._id}
-            onClick={() => setSelectedUser(user)}
-            className={`w-full p-3 flex items-center gap-3 hover:bg-base-200 transition-colors ${
-              selectedUser?._id === user._id &&
-              "bg-base-300 hover:bg-base-300 ring-2 ring-primary"
-            }`}
-          >
-            <div className="relative mx-auto lg:mx-0">
-              <img
-                src={user.profilePicture || "/avatar.png"}
-                alt={user.name}
-                className="size-12 object-cover rounded-full border border-base-300"
-              />
-              {onlineUsers.includes(user._id) && (
-                <span
-                  className="absolute bottom-0 right-0 size-3 bg-success 
-                        rounded-full ring-2 ring-base-100"
+        {filteredUsers.length > 0 ? (
+          filteredUsers.map((user) => (
+            <button
+              key={user._id}
+              onClick={() => setSelectedUser(user)}
+              className={`w-full p-3 flex items-center gap-3 hover:bg-base-200 transition-colors ${
+                selectedUser?._id === user._id &&
+                "bg-base-300 hover:bg-base-300 ring-2 ring-primary"
+              }`}
+            >
+              <div className="relative mx-auto lg:mx-0">
+                <img
+                  src={user.profilePicture || "/avatar.png"}
+                  alt={user.name || user.fullName || "User"}
+                  className="size-12 object-cover rounded-full border border-base-300"
                 />
-              )}
-            </div>
-
-            {/* User info - only visible on larger screens */}
-            <div className="hidden lg:block text-left min-w-0">
-              <div className="font-medium truncate">{user.fullName}</div>
-              <div className="text-sm text-base-content/60">
-                {onlineUsers.includes(user._id) ? "Online" : "Offline"}
+                {safeOnlineUsers.includes(user._id) && (
+                  <span
+                    className="absolute bottom-0 right-0 size-3 bg-success 
+                          rounded-full ring-2 ring-base-100"
+                  />
+                )}
               </div>
-            </div>
-          </button>
-        ))}
-        {filteredUsers.length === 0 && (
+
+              {/* User info - only visible on larger screens */}
+              <div className="hidden lg:block text-left min-w-0">
+                <div className="font-medium truncate">
+                  {user.fullName || user.name || "Unknown User"}
+                </div>
+                <div className="text-sm text-base-content/60">
+                  {safeOnlineUsers.includes(user._id) ? "Online" : "Offline"}
+                </div>
+              </div>
+            </button>
+          ))
+        ) : (
           <div className="flex flex-col items-center justify-center h-40 text-base-content/60">
             <Users className="size-10 mb-2" />
-            <span className="text-base font-medium">No users online</span>
+            <span className="text-base font-medium">
+              {showOnlineOnly ? "No users online" : "No users found"}
+            </span>
           </div>
         )}
       </div>
     </aside>
   );
 }
+
 export default SideBar;

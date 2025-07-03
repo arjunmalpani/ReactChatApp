@@ -27,7 +27,7 @@ app.use(
 );
 
 app.use("/api/auth", authRoutes);
-app.use("/api/messages", messageRoutes);
+app.use("/api/message", messageRoutes);
 
 if (process.env.NODE_ENV === "production") {
     const staticPath = path.join(__dirname, "../client", "dist");
