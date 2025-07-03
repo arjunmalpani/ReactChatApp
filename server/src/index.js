@@ -31,6 +31,12 @@ app.use((req, res, next) => {
 app.use('/api/auth', authRoutes)
 app.use('/api/message', messageRoutes)
 
+if (process.env.NODE_ENV === 'production') {
+    app.use(express.static(path.join(__dirname, '../client/dist')));
+    app.get("*", (req, res) => {
+        res.sendFile(path.join(__dirname, "../client", "dist", "index.html"));
+    });
+}
 server.listen(PORT, () => {
     console.log('Server is running at PORT:', PORT);
     connectDB()
